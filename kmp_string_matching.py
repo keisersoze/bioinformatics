@@ -1,49 +1,87 @@
-# TODO non va un cazzo
-
-def preKmp(pattern) -> [int]:
+def kmp_table(pattern) -> [int]:
     m = len(pattern)
-    pi = [-1] * m
-    k = 0 # prefix len
-    for q in range(1, m): # scanning the pattern
-        while k>0 and pattern[k] != pattern[q]: # mismatch
-            k = pi[k-1]
-        if pattern[k] == pattern[q]: # match
-            k+=1
-        pi[q] = k-1
-    return pi
+    table = [-1] * m
+    pos = 1  # the current position we are computing in T
+    cnd = 0  # the zero-based index in W of the next character of the current candidate substring
 
-def KMP(text, pattern) -> None:
-    n = len(text)
-    m = len(pattern)
-    pi = preKmp(pattern)
-    q = 0 # number of characters matched
-    for i in range(0, n):
-        while q>0 and pattern[q] != text[i]:
-            q = pi[q-1]
-        if pattern[q] == text[i]: # match
-            q+=1
-        if q == m:
-            output(i-m+1)
-            q = pi[q-1] # look for the next match
+    while pos < len(pattern):
+        if pattern[pos] == pattern[cnd]:
+            table[pos] = table[cnd]
+        else:
+            table[pos] = cnd
+            cnd = table[cnd]
+            while cnd >= 0 and pattern[pos] != pattern[cnd]:
+                cnd = table[cnd]
+        pos += 1
+        cnd += 1
 
-def output(shift) -> None:
-    print("The pattern occurs with shift " + str(shift))
+    table.append(cnd)
 
-def KMP2(T, P):
-    i, j = 0, 0
-    m, n = len(P), len(T)
-    pi = preKmp(P)
-    while j>n:
-        while i>-1 and P[i] != T[j]:
-            i = pi[i]
-        i+=1
-        j+=1
-        if i>=m:
-            output(j-i)
-            i = pi[i]
+    return table
 
-print(preKmp("gcagagag"))
-KMP("bbbabbbba", "bbba")
-KMP2("bbbabbbba", "bbba")
 
-#print(preKmp("bbba"))
+def kmp_search(text, pattern) -> [int]:
+    j, k = 0, 0  # the position of the current character in text, the position of the current character in pattern
+    table = kmp_table(pattern)
+    pos = []
+
+    while j < len(text):
+        if pattern[k] == text[j]:
+            j += 1
+            k += 1
+            if k == len(pattern):
+                # match
+                pos.append(j - k)
+                k = table[k]
+        else:
+            k = table[k]
+            if k < 0:
+                j += 1
+                k += 1
+    return pos
+
+
+def axamac(pattern, text) -> [int]:
+    pos = []
+
+    # preprocessing
+    table = kmp_table(pattern)
+    m, n = len(pattern), len(text)
+    ell = 1
+    while pattern[ell - 1] == pattern[ell]:
+        ell += 1
+        if ell == m:
+            ell = 0
+
+    # searching
+    i = ell
+    j, k = 0, 0
+    while j <= n - m:
+        while i < m and pattern[i] == text[i + j]:
+            i += 1
+        if i >= m:
+            while k < ell and pattern[k] == text[i + j]:
+                k += 1
+            if k >= ell:
+                pos.append(j)
+        j += i - table[i]
+        if i == ell:
+            k = max(0, k - 1)
+        else:
+            if table[i] <= ell:
+                k = max(0, table[i])
+                i = ell
+            else:
+                k = ell
+                i = table[i]
+
+
+# t, p = "bbbabbbba", "bbba"
+t, p = "GCATCGCAGAGAGTATACAGTACG", "GCAGAGAG"
+# pre processing
+print("Table of pattern", p, ":", kmp_table(p))
+# KMP
+print("The pattern occurs at positions :", kmp_search(t, p))
+# Apostolico-Chrochemore
+print("The pattern occurs at positions :", kmp_search(t, p))
+
