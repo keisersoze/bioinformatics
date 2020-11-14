@@ -33,5 +33,6 @@ def kmp_matcher(string, pattern):
             k = kmp_table[k - 1]
     return positions
 
+
 print(compute_kmp_table("bbba"))
 print(kmp_matcher("bbbabbbba", "bbba"))
